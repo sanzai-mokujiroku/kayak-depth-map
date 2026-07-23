@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>富山湾 航空写真×水深マップ｜かけ上がりを目で探す無料ツール</title>
+<meta name="description" content="富山湾の航空写真に水深の等深線を重ねた無料マップ。岸近くの根・藻場・かけ上がり（急深）を目で探せます。カヤックフィッシングの下調べに。タップで推定水深も表示。">
+<link rel="canonical" href="https://sanzai-mokujiroku.github.io/kayak-depth-map/">
+<meta name="theme-color" content="#0f1a2b">
+<!-- OGP -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="富山湾 航空写真×水深マップ｜かけ上がりを目で探す">
+<meta property="og:description" content="航空写真に等深線を重ねて、岸近くの根・かけ上がりを目で探す無料ツール。カヤックフィッシングの下調べに。">
+<meta property="og:url" content="https://sanzai-mokujiroku.github.io/kayak-depth-map/">
+<meta property="og:image" content="https://sanzai-mokujiroku.github.io/kayak-depth-map/icon-512.png">
+<meta name="twitter:card" content="summary">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="stylesheet" href="vendor/leaflet/leaflet.css">
+<style>
+  :root{ --bg:#0f1a2b; --panel:#16243c; --fg:#eaf2ff; --accent:#ff5aa0; --sub:#9db4d6; }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP",sans-serif;background:var(--bg);color:var(--fg)}
+  #app{display:flex;flex-direction:column;height:100%}
+  header{padding:9px 14px;background:var(--panel);flex:0 0 auto}
+  header h1{margin:0;font-size:15px;font-weight:700;letter-spacing:.02em}
+  header p{margin:2px 0 0;font-size:11px;color:var(--sub)}
+  #map{flex:1 1 auto;width:100%;background:#0a1220}
+  #readout{flex:0 0 auto;background:var(--panel);padding:10px 14px;font-size:13px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;min-height:46px}
+  #readout .k{color:var(--sub);font-size:11px;margin-right:4px}
+  #readout .v{font-variant-numeric:tabular-nums;font-weight:600}
+  #readout .depth .v{color:var(--accent);font-size:17px}
+  #readout .hint{color:var(--sub);font-size:12px}
+  .leaflet-container{background:#0a1220}
+  /* 等深線ラベル */
+  .depth-label{color:#eaf2ff;font-size:11px;font-weight:700;text-shadow:0 0 3px #000,0 0 3px #000,0 1px 2px #000;white-space:nowrap}
+  /* 凡例（折りたたみ式） */
+  .legend{background:rgba(16,26,44,.88);color:#eaf2ff;border-radius:8px;font-size:11px;line-height:1.5;backdrop-filter:blur(2px);overflow:hidden;user-select:none}
+  .legend .hd{display:flex;align-items:center;gap:6px;padding:6px 10px;cursor:pointer;font-weight:700}
+  .legend .hd .caret{margin-left:auto;color:var(--sub);font-size:10px}
+  .legend .bd{padding:2px 10px 9px}
+  .legend.collapsed .bd{display:none}
+  .legend .row{display:flex;align-items:center;gap:6px;margin-top:3px}
+  .legend .sw{width:22px;height:0;border-top-width:3px;border-top-style:solid;display:inline-block}
+  .legend .note{color:var(--sub);margin-top:6px;font-size:10px;max-width:180px}
+  .loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#9db4d6;font-size:13px;z-index:500;pointer-events:none}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1>富山湾 航空写真×水深マップ</h1>
+    <p>岸近くの根・藻場・かけ上がりを、目で探す。線が詰まった帯＝急深。タップで水深が出ます。</p>
+  </header>
+  <div id="map"><div class="loading" id="loading">水深データを読み込み中…</div></div>
+  <div id="readout">
+    <span class="hint" id="hint">地図をタップしてください</span>
+    <span class="pos" style="display:none">
+      <span class="k">緯度</span><span class="v" id="lat">–</span>
+      &nbsp;&nbsp;<span class="k">経度</span><span class="v" id="lng">–</span>
+    </span>
+    <span class="depth" style="display:none"><span class="k">推定水深</span><span class="v" id="depth">–</span></span>
+  </div>
+</div>
+<script src="vendor/leaflet/leaflet.js"></script>
+<script>
+  const map = L.map('map', { zoomControl:true, attributionControl:true })
+    .setView([36.85, 137.22], 11);
+
+  // 国土地理院・シームレス航空写真（無料・公式）。岸近くの澄んだ水は根や藻場が写る＝実質の高解像度。
+  L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/seamlessphoto/{z}/{x}/{y}.jpg', {
+    attribution: '航空写真：<a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank" rel="noopener">国土地理院</a>／水深：GEBCO 2020',
+    maxZoom: 18, maxNativeZoom: 18
+  }).addTo(map);
+
+  const LEVELS = [
+    { d:5,   color:'#c6fff0', weight:2.2, opacity:.9,  kayak:true },
+    { d:10,  color:'#9bf0dd', weight:2.4, opacity:.95, kayak:true },
+    { d:20,  color:'#63d6d0', weight:2.6, opacity:.98, kayak:true },
+    { d:30,  color:'#49b7d0', weight:2.6, opacity:.98, kayak:true },
+    { d:50,  color:'#4aa0d8', weight:2.2, opacity:.92, kayak:true },
+    { d:100, color:'#dbe6ff', weight:1.2, opacity:.5 },
+    { d:200, color:'#cdd9f5', weight:1.1, opacity:.42 },
+    { d:300, color:'#c2cff0', weight:1.0, opacity:.36 },
+    { d:500, color:'#b8c6ea', weight:1.0, opacity:.3 },
+    { d:800, color:'#aebfe4', weight:1.0, opacity:.26 },
+  ];
+
+  let G = null;
+  const D = (i,j) => G.depths[i*G.nLng + j];
+  const gridToLatLng = (gi,gj) => [ G.latMax - gi*G.latStep, G.lngMin + gj*G.lngStep ];
+
+  // マーチングスクエア法：1つの水深レベルの等深線セグメント（2点線分）を作る
+  function contourSegments(level){
+    const segs = [];
+    for(let i=0;i<G.nLat-1;i++){
+      for(let j=0;j<G.nLng-1;j++){
+        const tl=D(i,j), tr=D(i,j+1), br=D(i+1,j+1), bl=D(i+1,j);
+        if(tl==null||tr==null||br==null||bl==null) continue;
+        let idx=0;
+        if(tl>=level) idx|=8; if(tr>=level) idx|=4; if(br>=level) idx|=2; if(bl>=level) idx|=1;
+        if(idx===0||idx===15) continue;
+        const top    = [i,                       j + (level-tl)/(tr-tl)];
+        const right  = [i + (level-tr)/(br-tr),  j+1];
+        const bottom = [i+1,                     j + (level-bl)/(br-bl)];
+        const left   = [i + (level-tl)/(bl-tl),  j];
+        const push = (a,b)=> segs.push([ gridToLatLng(a[0],a[1]), gridToLatLng(b[0],b[1]) ]);
+        switch(idx){
+          case 1:  push(left,bottom); break;
+          case 2:  push(bottom,right); break;
+          case 3:  push(left,right); break;
+          case 4:  push(top,right); break;
+          case 5:  push(top,right); push(left,bottom); break;
+          case 6:  push(top,bottom); break;
+          case 7:  push(top,left); break;
+          case 8:  push(top,left); break;
+          case 9:  push(top,bottom); break;
+          case 10: push(top,left); push(bottom,right); break;
+          case 11: push(top,right); break;
+          case 12: push(left,right); break;
+          case 13: push(bottom,right); break;
+          case 14: push(left,bottom); break;
+        }
+      }
+    }
+    return segs;
+  }
+
+  // 線分を端点でつないで連続した折れ線にする
+  function stitch(segs){
+    const key = p => p[0].toFixed(7)+','+p[1].toFixed(7);
+    const map = new Map();
+    segs.forEach((s,i)=>[0,1].forEach(e=>{
+      const k=key(s[e]); if(!map.has(k)) map.set(k,[]); map.get(k).push(i);
+    }));
+    const used = new Array(segs.length).fill(false);
+    const lines = [];
+    const takeFrom = k => { for(const i of (map.get(k)||[])) if(!used[i]) return i; return -1; };
+    for(let start=0;start<segs.length;start++){
+      if(used[start]) continue;
+      used[start]=true;
+      let line=[segs[start][0], segs[start][1]];
+      // 末尾方向へ延ばす
+      let tk=key(line[line.length-1]);
+      for(;;){ const n=takeFrom(tk); if(n<0) break; used[n]=true; const s=segs[n];
+        if(key(s[0])===tk){ line.push(s[1]); tk=key(s[1]); } else { line.push(s[0]); tk=key(s[0]); } }
+      // 先頭方向へ延ばす
+      let hk=key(line[0]);
+      for(;;){ const n=takeFrom(hk); if(n<0) break; used[n]=true; const s=segs[n];
+        if(key(s[0])===hk){ line.unshift(s[1]); hk=key(s[1]); } else { line.unshift(s[0]); hk=key(s[0]); } }
+      lines.push(line);
+    }
+    return lines;
+  }
+
+  // Chaikin法で折れ線を平滑化（端点は固定）
+  function chaikin(line, iters){
+    for(let it=0; it<iters; it++){
+      if(line.length<3) return line;
+      const out=[line[0]];
+      for(let i=0;i<line.length-1;i++){
+        const a=line[i], b=line[i+1];
+        out.push([a[0]*.75+b[0]*.25, a[1]*.75+b[1]*.25]);
+        out.push([a[0]*.25+b[0]*.75, a[1]*.25+b[1]*.75]);
+      }
+      out.push(line[line.length-1]);
+      line=out;
+    }
+    return line;
+  }
+
+  function polylineLenDeg(line){ let L=0; for(let i=1;i<line.length;i++){ const a=line[i-1],b=line[i]; L+=Math.hypot(a[0]-b[0],a[1]-b[1]); } return L; }
+
+  // タップ地点の水深（4点あれば線形補間、無ければ最寄りの実測点）
+  function depthAt(lat,lng){
+    const gi=(G.latMax-lat)/G.latStep, gj=(lng-G.lngMin)/G.lngStep;
+    if(gi<0||gj<0||gi>G.nLat-1||gj>G.nLng-1) return null;
+    const i0=Math.floor(gi), j0=Math.floor(gj);
+    const i1=Math.min(i0+1,G.nLat-1), j1=Math.min(j0+1,G.nLng-1);
+    const fi=gi-i0, fj=gj-j0;
+    const d00=D(i0,j0), d01=D(i0,j1), d10=D(i1,j0), d11=D(i1,j1);
+    if(d00!=null&&d01!=null&&d10!=null&&d11!=null)
+      return d00*(1-fi)*(1-fj)+d01*(1-fi)*fj+d10*fi*(1-fj)+d11*fi*fj;
+    let best=null, bd=1e9;
+    for(const [ii,jj] of [[i0,j0],[i0,j1],[i1,j0],[i1,j1]]){
+      const v=D(ii,jj); if(v!=null){ const dist=Math.hypot(ii-gi,jj-gj); if(dist<bd){bd=dist;best=v;} }
+    }
+    return best;
+  }
+
+  const hint=document.getElementById('hint');
+  const posEl=document.querySelector('#readout .pos');
+  const depthEl=document.querySelector('#readout .depth');
+  let marker=null;
+  map.on('click', (e)=>{
+    const {lat,lng}=e.latlng;
+    if(marker) marker.setLatLng(e.latlng);
+    else marker=L.circleMarker(e.latlng,{radius:7,color:'#ff5aa0',weight:3,fillColor:'#ff5aa0',fillOpacity:.5}).addTo(map);
+    hint.style.display='none'; posEl.style.display='';
+    document.getElementById('lat').textContent=lat.toFixed(5);
+    document.getElementById('lng').textContent=lng.toFixed(5);
+    depthEl.style.display='';
+    const d=G?depthAt(lat,lng):null;
+    document.getElementById('depth').textContent = (d==null)?'陸地/データ外':`約 ${Math.round(d)} m`;
+  });
+
+  fetch('depth-toyama.json').then(r=>r.json()).then(data=>{
+    G=data;
+    const labelLayer=L.layerGroup().addTo(map);
+    for(const lv of LEVELS){
+      const lines = stitch(contourSegments(lv.d))
+        .map(l => chaikin(l, 2))
+        .filter(l => l.length>1);
+      if(!lines.length) continue;
+      L.polyline(lines,{ color:lv.color, weight:lv.weight, opacity:lv.opacity, interactive:false, lineJoin:'round', lineCap:'round' }).addTo(map);
+      // カヤック帯の線に数字ラベルを1本だけ（一番長い線の中点）
+      if(lv.kayak){
+        lines.sort((a,b)=>polylineLenDeg(b)-polylineLenDeg(a));
+        const longest=lines[0]; const mid=longest[Math.floor(longest.length/2)];
+        L.marker(mid,{interactive:false, icon:L.divIcon({className:'depth-label', html:lv.d+'m', iconSize:null})}).addTo(labelLayer);
+      }
+    }
+    document.getElementById('loading').remove();
+
+    // 折りたたみ凡例
+    const legend=L.control({position:'topright'});
+    legend.onAdd=function(){
+      const div=L.DomUtil.create('div','legend');
+      let rows='';
+      for(const lv of LEVELS.filter(l=>l.kayak))
+        rows+=`<div class="row"><span class="sw" style="border-top-color:${lv.color}"></span>${lv.d}m</div>`;
+      div.innerHTML=
+        `<div class="hd">水深の等深線<span class="caret">タップで開閉 ▾</span></div>`+
+        `<div class="bd"><div style="color:var(--sub);font-size:10px;margin-bottom:2px">カヤック帯</div>${rows}`+
+        `<div class="row" style="margin-top:6px"><span class="sw" style="border-top-color:#cdd9f5;border-top-width:1px"></span>100m以深（文脈）</div>`+
+        `<div class="note">GEBCO(約450m格子)のおおまかな目安。細かい根・地形は航空写真で。実際の水深は現場の魚探で確認を。</div></div>`;
+      L.DomEvent.disableClickPropagation(div);
+      div.querySelector('.hd').addEventListener('click',()=>div.classList.toggle('collapsed'));
+      if(window.innerWidth<520) div.classList.add('collapsed'); // スマホは畳んで開始
+      return div;
+    };
+    legend.addTo(map);
+  }).catch(err=>{
+    const el=document.getElementById('loading'); if(el) el.textContent='水深データの読み込みに失敗しました';
+    console.error(err);
+  });
+
+  // PWA（オフライン起動）
+  if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+</body>
+</html>

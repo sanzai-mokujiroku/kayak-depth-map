@@ -1,0 +1,13 @@
+{
+  "name": "富山湾 航空写真×水深マップ",
+  "short_name": "水深マップ",
+  "description": "航空写真に等深線を重ね、岸近くの根・かけ上がりを目で探す無料ツール（富山湾）",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0f1a2b",
+  "theme_color": "#0f1a2b",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
