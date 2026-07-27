@@ -44,13 +44,51 @@
   .legend .sw{width:22px;height:0;border-top-width:3px;border-top-style:solid;display:inline-block}
   .legend .note{color:var(--sub);margin-top:6px;font-size:10px;max-width:180px}
   .loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#9db4d6;font-size:13px;z-index:500;pointer-events:none}
+  /* 根メモ（自分のポイント） */
+  .fab{position:fixed;right:14px;bottom:64px;z-index:1000;width:52px;height:52px;border-radius:50%;background:var(--accent);color:#fff;border:none;font-size:22px;box-shadow:0 3px 12px rgba(0,0,0,.5);cursor:pointer;display:flex;align-items:center;justify-content:center}
+  .sheet,.modal{position:fixed;inset:0;z-index:1100;background:rgba(0,0,0,.5);display:none;align-items:flex-end;justify-content:center}
+  .modal{align-items:center}
+  .sheet.open,.modal.open{display:flex}
+  .sheet-inner{background:var(--panel);width:100%;max-width:560px;max-height:82vh;border-radius:14px 14px 0 0;padding:14px 16px calc(16px + env(safe-area-inset-bottom));overflow:auto}
+  .modal-inner{background:var(--panel);width:100%;max-width:440px;margin:16px;border-radius:14px;padding:16px}
+  .sheet h2,.modal h2{margin:0 0 4px;font-size:15px}
+  .sheet .sub{color:var(--sub);font-size:11px;margin:0 0 10px;line-height:1.5}
+  .close-x{float:right;color:var(--sub);background:none;border:none;font-size:22px;cursor:pointer;line-height:1;padding:0 2px}
+  .ne-actions{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+  .ne-actions button{flex:1 1 auto;min-width:calc(50% - 4px);padding:11px 8px;border-radius:9px;border:1px solid #2a3b5c;background:#1d2f4d;color:var(--fg);font-size:13px;font-weight:600;cursor:pointer}
+  .ne-actions button:disabled{opacity:.4}
+  #ne-list{display:flex;flex-direction:column;gap:8px}
+  .ne-item{background:#12203a;border:1px solid #22334f;border-radius:9px;padding:9px 10px}
+  .ne-t{font-size:13px;font-weight:600;margin-bottom:3px;word-break:break-word}
+  .ne-s{color:var(--sub);font-size:11px;font-variant-numeric:tabular-nums}
+  .ne-row2{display:flex;gap:6px;margin-top:8px}
+  .ne-mini{flex:1;padding:7px;border-radius:7px;border:1px solid #2a3b5c;background:#1d2f4d;color:var(--fg);font-size:12px;cursor:pointer}
+  .ne-mini.del{border-color:#5c2a3a;background:#3a1d2a;color:#ffb3c8}
+  .ne-empty{color:var(--sub);font-size:12px;line-height:1.8;text-align:center;padding:16px 4px}
+  .field{margin-bottom:10px}
+  .field label{display:block;font-size:11px;color:var(--sub);margin-bottom:3px}
+  .field input,.field textarea{width:100%;padding:10px;border-radius:8px;border:1px solid #2a3b5c;background:#0f1a2b;color:var(--fg);font-size:14px;font-family:inherit}
+  .field textarea{min-height:52px;resize:vertical}
+  .field .ex{font-size:10px;color:var(--sub);margin-top:3px}
+  .modal-btns{display:flex;gap:8px;margin-top:6px}
+  .modal-btns button{flex:1;padding:12px;border-radius:9px;border:none;font-size:14px;font-weight:700;cursor:pointer}
+  .modal-btns .cancel{background:#1d2f4d;color:var(--fg)}
+  .modal-btns .ok{background:var(--accent);color:#fff}
+  .negomo-pin span{display:block;width:14px;height:14px;border-radius:50%;background:#ffcf5a;border:2px solid #7a4a00;box-shadow:0 0 0 2px rgba(0,0,0,.35)}
+  .negomo-pop{font-size:13px;min-width:150px;color:#1a1a1a}
+  .negomo-pop .mm{font-weight:700;margin-bottom:5px;word-break:break-word}
+  .negomo-pop .cc{font-variant-numeric:tabular-nums;font-size:12px;line-height:1.5}
+  .negomo-pop .dd{color:#a3143c;margin-top:3px;font-size:12px}
+  .np-row{display:flex;gap:6px;margin-top:8px}
+  .np-btn{flex:1;padding:6px;border-radius:6px;border:1px solid #ccc;background:#f2f2f2;font-size:12px;cursor:pointer}
+  .np-btn.del{background:#ffe3ea;border-color:#f5b6c6;color:#a3143c}
 </style>
 </head>
 <body>
 <div id="app">
   <header>
     <h1>富山湾 航空写真×水深マップ</h1>
-    <p>岸近くの根・藻場・かけ上がりを、目で探す。線が詰まった帯＝急深。タップで水深が出ます。</p>
+    <p>岸近くの根・藻場・かけ上がりを、目で探す。線が詰まった帯＝急深。タップで水深が出ます。右下の📍で自分の「根メモ」も保存できます。</p>
   </header>
   <div id="map"><div class="loading" id="loading">水深データを読み込み中…</div></div>
   <div id="readout">
@@ -62,6 +100,35 @@
     <span class="depth" style="display:none"><span class="k">推定水深</span><span class="v" id="depth">–</span></span>
   </div>
 </div>
+
+<!-- 根メモ（自分のポイント） -->
+<button class="fab" id="fab" title="根メモ" aria-label="根メモを開く">📍</button>
+<div class="sheet" id="sheet">
+  <div class="sheet-inner">
+    <button class="close-x" id="sheet-close" aria-label="閉じる">×</button>
+    <h2>📍 根メモ（自分のポイント）</h2>
+    <p class="sub">魚探で見つけた根の座標を保存します。写真は残さず、座標とメモだけをこの端末に保存（この端末のブラウザ内）。機種変や別端末へは「書き出し／読み込み」で移せます。</p>
+    <div class="ne-actions">
+      <button id="ne-savetap" disabled>＋ 地図で選んだ点を保存</button>
+      <button id="ne-manual">＋ 座標を手入力</button>
+      <button id="ne-export">⬇ 書き出し(JSON)</button>
+      <button id="ne-import">⬆ 読み込み(JSON)</button>
+    </div>
+    <div id="ne-list"></div>
+    <input type="file" id="ne-file" accept="application/json,.json" style="display:none">
+  </div>
+</div>
+<div class="modal" id="editor">
+  <div class="modal-inner">
+    <h2 id="ed-title">根メモを追加</h2>
+    <div class="field"><label>メモ（魚種・地形・時期など）</label><textarea id="ne-memo" placeholder="例：手前のかけ上がり。キジハタ反応あり"></textarea></div>
+    <div class="field"><label>緯度</label><input id="ne-lat" inputmode="text" placeholder="N 36°45.415'  /  36 45.415  /  36.7569"><div class="ex">魚探の表示（度分）をそのまま入力できます</div></div>
+    <div class="field"><label>経度</label><input id="ne-lng" inputmode="text" placeholder="E 137°17.254'  /  137 17.254  /  137.2876"></div>
+    <div class="field"><label>推定水深（m・任意）</label><input id="ne-depth" inputmode="decimal" placeholder="空欄なら地図の推定値を使います"></div>
+    <div class="modal-btns"><button class="cancel" id="ed-cancel">キャンセル</button><button class="ok" id="ed-save">保存</button></div>
+  </div>
+</div>
+
 <script src="vendor/leaflet/leaflet.js"></script>
 <script>
   const map = L.map('map', { zoomControl:true, attributionControl:true })
@@ -202,6 +269,8 @@
     depthEl.style.display='';
     const d=G?depthAt(lat,lng):null;
     document.getElementById('depth').textContent = (d==null)?'陸地/データ外':`約 ${Math.round(d)} m`;
+    lastTap={lat,lng,depth:d};
+    const st=document.getElementById('ne-savetap'); if(st) st.disabled=false;
   });
 
   fetch('depth-toyama.json').then(r=>r.json()).then(data=>{
@@ -244,6 +313,147 @@
     const el=document.getElementById('loading'); if(el) el.textContent='水深データの読み込みに失敗しました';
     console.error(err);
   });
+
+  // ===== 根メモ（自分のポイント）=====
+  // 魚探で見つけた根の座標を、写真ではなく「座標＋メモ」だけ端末に保存する。
+  // 座標は魚探の度分表記（例 N 36°45.415'）で入出力。データはlocalStorage、JSONで持ち出し可。
+  const NEGOMO_KEY='kayak-negomo-v1';
+  const negomoLayer=L.layerGroup().addTo(map);
+  const pinMarkers={};
+  let negomo=loadNegomo(), lastTap=null, editingId=null;
+
+  function loadNegomo(){ try{ return JSON.parse(localStorage.getItem(NEGOMO_KEY))||[]; }catch(e){ return []; } }
+  function saveNegomo(){ try{ localStorage.setItem(NEGOMO_KEY, JSON.stringify(negomo)); }catch(e){ alert('保存できませんでした（端末の空き容量をご確認ください）'); } }
+  function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+  function escapeHtml(s){ return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+  // 十進度 → 度分表記（例 36.756917 → "N 36°45.415'"）
+  function toDM(v,isLat){ const h=isLat?(v>=0?'N':'S'):(v>=0?'E':'W'); const a=Math.abs(v),d=Math.floor(a); return `${h} ${d}°${((a-d)*60).toFixed(3)}'`; }
+  // 文字列 → 十進度。度分／度分秒／十進 と N/S/E/W・記号に対応（魚探の表示をそのまま貼れる）
+  function parseCoord(str){
+    if(str==null) return null;
+    let s=String(str).trim(); if(!s) return null;
+    let sign=/[SWsw]/.test(s)?-1:1;
+    s=s.replace(/[NSEWnsew]/g,' ').replace(/[°'"′″]/g,' ').replace(/,/g,'.');
+    const nums=(s.match(/-?\d+(?:\.\d+)?/g)||[]).map(Number);
+    if(!nums.length) return null;
+    if(nums[0]<0){ sign=-1; nums[0]=Math.abs(nums[0]); }
+    const dec = nums.length===1?nums[0] : nums.length===2?nums[0]+nums[1]/60 : nums[0]+nums[1]/60+nums[2]/3600;
+    return sign*dec;
+  }
+
+  function renderPins(){
+    negomoLayer.clearLayers();
+    for(const k in pinMarkers) delete pinMarkers[k];
+    negomo.forEach(p=>{
+      const m=L.marker([p.lat,p.lng],{icon:L.divIcon({className:'negomo-pin',html:'<span></span>',iconSize:[18,18],iconAnchor:[9,9]})}).addTo(negomoLayer);
+      m.bindTooltip(p.memo||'根メモ',{direction:'top',offset:[0,-10]});
+      m.bindPopup(buildPopupEl(p));   // ピンをタップ／「地図で見る」の両方でこの内容が開く
+      pinMarkers[p.id]=m;
+    });
+  }
+  function buildPopupEl(p){
+    const div=document.createElement('div'); div.className='negomo-pop';
+    div.innerHTML=`<div class="mm">${escapeHtml(p.memo||'（メモなし）')}</div>`+
+      `<div class="cc">${toDM(p.lat,true)}<br>${toDM(p.lng,false)}</div>`+
+      `<div class="dd">推定水深：${p.depth==null?'—':'約 '+Math.round(p.depth)+' m'}</div>`;
+    const row=document.createElement('div'); row.className='np-row';
+    const e=document.createElement('button'); e.className='np-btn'; e.textContent='編集';
+    const d=document.createElement('button'); d.className='np-btn del'; d.textContent='削除';
+    e.onclick=()=>{ map.closePopup(); openEditor(p); };
+    d.onclick=()=>{ if(confirm('この根メモを削除しますか？')){ negomo=negomo.filter(x=>x.id!==p.id); saveNegomo(); renderPins(); renderList(); map.closePopup(); } };
+    row.append(e,d); div.append(row);
+    return div;
+  }
+
+  function renderList(){
+    const wrap=document.getElementById('ne-list');
+    if(!negomo.length){ wrap.innerHTML='<div class="ne-empty">まだ根メモはありません。<br>地図をタップして「地図で選んだ点を保存」か、<br>「座標を手入力」で追加できます。</div>'; return; }
+    wrap.innerHTML='';
+    negomo.slice().sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).forEach(p=>{
+      const item=document.createElement('div'); item.className='ne-item';
+      item.innerHTML=`<div class="ne-t">${escapeHtml(p.memo||'（メモなし）')}</div>`+
+        `<div class="ne-s">${toDM(p.lat,true)}　${toDM(p.lng,false)}　/　${p.depth==null?'水深—':'約'+Math.round(p.depth)+'m'}</div>`;
+      const row=document.createElement('div'); row.className='ne-row2';
+      const go=document.createElement('button'); go.className='ne-mini'; go.textContent='地図で見る';
+      const ed=document.createElement('button'); ed.className='ne-mini'; ed.textContent='編集';
+      const del=document.createElement('button'); del.className='ne-mini del'; del.textContent='削除';
+      go.onclick=()=>{ closeSheet(); map.setView([p.lat,p.lng],Math.max(map.getZoom(),15)); const m=pinMarkers[p.id]; if(m) m.openPopup(); };
+      ed.onclick=()=>openEditor(p);
+      del.onclick=()=>{ if(confirm('この根メモを削除しますか？')){ negomo=negomo.filter(x=>x.id!==p.id); saveNegomo(); renderPins(); renderList(); } };
+      row.append(go,ed,del); item.append(row); wrap.append(item);
+    });
+  }
+
+  // シート開閉
+  const sheet=document.getElementById('sheet'), editor=document.getElementById('editor');
+  function openSheet(){ document.getElementById('ne-savetap').disabled=!lastTap; renderList(); sheet.classList.add('open'); }
+  function closeSheet(){ sheet.classList.remove('open'); }
+  document.getElementById('fab').onclick=openSheet;
+  document.getElementById('sheet-close').onclick=closeSheet;
+  sheet.onclick=e=>{ if(e.target===sheet) closeSheet(); };
+
+  // 追加・編集モーダル
+  function openEditor(p,prefill){
+    editingId=p?p.id:null;
+    const src=p||prefill||{};
+    document.getElementById('ed-title').textContent=p?'根メモを編集':'根メモを追加';
+    document.getElementById('ne-memo').value=src.memo||'';
+    document.getElementById('ne-lat').value=(src.lat!=null)?toDM(src.lat,true):'';
+    document.getElementById('ne-lng').value=(src.lng!=null)?toDM(src.lng,false):'';
+    document.getElementById('ne-depth').value=(src.depth!=null)?Math.round(src.depth):'';
+    closeSheet(); editor.classList.add('open');
+  }
+  function closeEditor(){ editor.classList.remove('open'); }
+  function saveEditor(){
+    const memo=document.getElementById('ne-memo').value.trim();
+    const lat=parseCoord(document.getElementById('ne-lat').value);
+    const lng=parseCoord(document.getElementById('ne-lng').value);
+    if(lat==null||lng==null||Math.abs(lat)>90||Math.abs(lng)>180){ alert('緯度・経度を読み取れませんでした。\n例：N 36°45.415\'  /  137 17.254  /  36.7569'); return; }
+    const dv=document.getElementById('ne-depth').value.trim();
+    let depth = dv===''? (G?depthAt(lat,lng):null) : Number(dv);
+    if(depth==null||isNaN(depth)) depth=null;
+    if(editingId){ const p=negomo.find(x=>x.id===editingId); if(p){ p.memo=memo; p.lat=lat; p.lng=lng; p.depth=depth; } }
+    else negomo.push({id:uid(),memo,lat,lng,depth,createdAt:Date.now()});
+    saveNegomo(); renderPins(); renderList(); closeEditor();
+    map.setView([lat,lng],Math.max(map.getZoom(),14));
+  }
+  document.getElementById('ed-cancel').onclick=closeEditor;
+  document.getElementById('ed-save').onclick=saveEditor;
+  editor.onclick=e=>{ if(e.target===editor) closeEditor(); };
+
+  // アクション（保存・手入力・書き出し・読み込み）
+  document.getElementById('ne-savetap').onclick=()=>{ if(lastTap) openEditor(null,{lat:lastTap.lat,lng:lastTap.lng,depth:lastTap.depth}); };
+  document.getElementById('ne-manual').onclick=()=>openEditor(null,{});
+  document.getElementById('ne-export').onclick=exportJSON;
+  document.getElementById('ne-import').onclick=()=>document.getElementById('ne-file').click();
+  document.getElementById('ne-file').onchange=e=>{ if(e.target.files[0]) importJSON(e.target.files[0]); e.target.value=''; };
+
+  function exportJSON(){
+    if(!negomo.length){ alert('書き出す根メモがありません。'); return; }
+    const blob=new Blob([JSON.stringify({tool:'kayak-depth-map',type:'negomo',version:1,points:negomo},null,2)],{type:'application/json'});
+    const d=new Date(),pad=n=>String(n).padStart(2,'0');
+    const a=document.createElement('a');
+    a.download=`negomo-${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}.json`;
+    a.href=URL.createObjectURL(blob); document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href),3000);
+  }
+  function importJSON(file){
+    const rd=new FileReader();
+    rd.onload=()=>{ try{
+      const obj=JSON.parse(rd.result);
+      const pts=Array.isArray(obj)?obj:(obj.points||[]);
+      let added=0;
+      pts.forEach(p=>{ if(typeof p.lat==='number'&&typeof p.lng==='number'&&!negomo.some(x=>x.id===p.id)){
+        negomo.push({id:p.id||uid(),memo:p.memo||'',lat:p.lat,lng:p.lng,depth:(typeof p.depth==='number'?p.depth:null),createdAt:p.createdAt||Date.now()}); added++; } });
+      saveNegomo(); renderPins(); renderList();
+      const skip=pts.length-added;
+      alert(added+'件の根メモを読み込みました。'+(skip>0?('（重複 '+skip+'件はスキップ）'):''));
+    }catch(e){ alert('読み込みに失敗しました。JSONファイルをご確認ください。'); } };
+    rd.readAsText(file);
+  }
+
+  renderPins();
 
   // PWA（オフライン起動）
   if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
