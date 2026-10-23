@@ -32,7 +32,8 @@
   header p{max-width:72%}
   header h1{margin:0;font-family:"Shippori Mincho B1","Hiragino Mincho ProN","Yu Mincho",serif;font-size:18px;font-weight:800;letter-spacing:.05em}
   .sister{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 1px}
-  .sister a{color:var(--fg);background:#1d2f4d;border:1px solid #2a3b5c;border-radius:999px;padding:4px 10px;font-size:11.5px;text-decoration:none;white-space:nowrap}
+  .sister a{display:inline-flex;align-items:center;gap:5px;color:var(--fg);background:#1d2f4d;border:1px solid #2a3b5c;border-radius:999px;padding:3px 10px 3px 4px;font-size:11.5px;text-decoration:none;white-space:nowrap}
+  .sister a img{width:18px;height:18px;border-radius:5px}
   .locbtn{position:fixed;right:14px;bottom:126px;z-index:1000;height:40px;padding:0 14px;border-radius:999px;background:#16243c;color:var(--fg);border:1px solid #2a3b5c;font-size:13px;font-weight:700;box-shadow:0 3px 12px rgba(0,0,0,.5);cursor:pointer}
   .locbtn:disabled{opacity:.6}
   #readout .depth .note{color:var(--sub);font-size:11px;margin-left:4px}
@@ -103,7 +104,7 @@
     <h1>富山湾 航空写真×水深マップ</h1>
     <p>岸近くの根・藻場・かけ上がりを、目で探す。線が詰まった帯＝急深。タップで水深が出ます。右下の📍で自分の「根メモ」も保存できます。</p>
     <nav class="sister" aria-label="姉妹ツールとブログ">
-      <a href="../kayak-go-check/">出艇判断</a><a href="../kayak-fish-forecast/">釣果予報</a><a href="../kayak-fishing-log/">釣行ログ</a><a href="https://kayak-papa.hatenablog.com/">ブログ</a>
+      <a href="../kayak-go-check/"><img src="../kayak-go-check/icon-180.png" alt="" width="18" height="18">出艇判断</a><a href="../kayak-fish-forecast/"><img src="../kayak-fish-forecast/icon-180.png" alt="" width="18" height="18">釣果予報</a><a href="../kayak-fishing-log/"><img src="../kayak-fishing-log/icon-180.png" alt="" width="18" height="18">釣行ログ</a><a href="https://kayak-papa.hatenablog.com/">ブログ</a>
     </nav>
   </header>
   <div id="map"><div class="loading" id="loading">水深データを読み込み中…</div></div>
