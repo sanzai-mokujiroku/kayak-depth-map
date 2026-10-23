@@ -6,7 +6,7 @@
 <title>富山湾 航空写真×水深マップ｜かけ上がりを目で探す無料ツール</title>
 <meta name="description" content="富山湾の航空写真に水深の等深線を重ねた無料マップ。岸近くの根・藻場・かけ上がり（急深）を目で探せます。カヤックフィッシングの下調べに。タップで推定水深も表示。">
 <link rel="canonical" href="https://sanzai-mokujiroku.github.io/kayak-depth-map/">
-<meta name="theme-color" content="#0f1a2b">
+<meta name="theme-color" content="#0b264b">
 <!-- OGP -->
 <meta property="og:type" content="website">
 <meta property="og:title" content="富山湾 航空写真×水深マップ｜かけ上がりを目で探す">
@@ -25,7 +25,11 @@
   *{box-sizing:border-box}
   html,body{margin:0;height:100%;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP",sans-serif;background:var(--bg);color:var(--fg)}
   #app{display:flex;flex-direction:column;height:100%}
-  header{padding:9px 14px;background:var(--panel);flex:0 0 auto}
+  header{position:relative;overflow:hidden;padding:10px 14px;background:#0b264b;flex:0 0 auto}
+  /* アプリアイコンと同じ紺地に水色の等深線（右側の飾り） */
+  header .hero-art{position:absolute;right:-56px;top:-22px;width:150px;height:auto;opacity:.5;pointer-events:none}
+  header h1,header p,header .sister{position:relative}
+  header p{max-width:72%}
   header h1{margin:0;font-family:"Shippori Mincho B1","Hiragino Mincho ProN","Yu Mincho",serif;font-size:18px;font-weight:800;letter-spacing:.05em}
   .sister{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 1px}
   .sister a{color:var(--fg);background:#1d2f4d;border:1px solid #2a3b5c;border-radius:999px;padding:4px 10px;font-size:11.5px;text-decoration:none;white-space:nowrap}
@@ -95,6 +99,7 @@
 <body>
 <div id="app">
   <header>
+    <img class="hero-art" src="hero-depth.webp" alt="" width="320" height="320">
     <h1>富山湾 航空写真×水深マップ</h1>
     <p>岸近くの根・藻場・かけ上がりを、目で探す。線が詰まった帯＝急深。タップで水深が出ます。右下の📍で自分の「根メモ」も保存できます。</p>
     <nav class="sister" aria-label="姉妹ツールとブログ">

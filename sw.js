@@ -2,7 +2,7 @@
 // アプリの外枠＋水深データ＋Leafletをキャッシュし、電波の弱い海上でも起動できるようにする。
 // さらに一度見た航空写真タイル（国土地理院）もキャッシュ＝見た海域は圏外でも表示できる。
 // アプリを更新したら CACHE の番号を上げること（古いキャッシュを破棄するため）。
-const CACHE = "depth-map-v4";       // アプリ本体（v4: 新しいアプリアイコン）
+const CACHE = "depth-map-v5";       // アプリ本体（v5: 紺の帯と等深線の絵）
 const TILECACHE = "depth-tiles-v1"; // 航空写真タイル（見たぶんだけ貯まる）
 const TILE_LIMIT = 1200;            // タイルの貯め過ぎ防止（古いものから捨てる）
 
@@ -14,7 +14,7 @@ const ASSETS = [
   "./vendor/leaflet/images/marker-shadow.png",
   "./vendor/leaflet/images/layers.png",
   "./vendor/leaflet/images/layers-2x.png",
-  "./icon-192.png", "./icon-512.png", "./icon-180.png",
+  "./icon-192.png", "./icon-512.png", "./icon-180.png", "./hero-depth.webp",
 ];
 
 self.addEventListener("install", (e) => {
