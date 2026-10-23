@@ -16,6 +16,9 @@
 <meta name="twitter:card" content="summary">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@800&display=swap&text=%C3%97%E3%83%83%E3%83%97%E3%83%9E%E5%86%99%E5%AF%8C%E5%B1%B1%E6%B0%B4%E6%B7%B1%E6%B9%BE%E7%9C%9F%E7%A9%BA%E8%88%AA">
 <link rel="stylesheet" href="vendor/leaflet/leaflet.css">
 <style>
   :root{ --bg:#0f1a2b; --panel:#16243c; --fg:#eaf2ff; --accent:#ff5aa0; --sub:#9db4d6; }
@@ -23,7 +26,12 @@
   html,body{margin:0;height:100%;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP",sans-serif;background:var(--bg);color:var(--fg)}
   #app{display:flex;flex-direction:column;height:100%}
   header{padding:9px 14px;background:var(--panel);flex:0 0 auto}
-  header h1{margin:0;font-size:15px;font-weight:700;letter-spacing:.02em}
+  header h1{margin:0;font-family:"Shippori Mincho B1","Hiragino Mincho ProN","Yu Mincho",serif;font-size:18px;font-weight:800;letter-spacing:.05em}
+  .sister{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 1px}
+  .sister a{color:var(--fg);background:#1d2f4d;border:1px solid #2a3b5c;border-radius:999px;padding:4px 10px;font-size:11.5px;text-decoration:none;white-space:nowrap}
+  .locbtn{position:fixed;right:14px;bottom:126px;z-index:1000;height:40px;padding:0 14px;border-radius:999px;background:#16243c;color:var(--fg);border:1px solid #2a3b5c;font-size:13px;font-weight:700;box-shadow:0 3px 12px rgba(0,0,0,.5);cursor:pointer}
+  .locbtn:disabled{opacity:.6}
+  #readout .depth .note{color:var(--sub);font-size:11px;margin-left:4px}
   header p{margin:2px 0 0;font-size:11px;color:var(--sub)}
   #map{flex:1 1 auto;width:100%;background:#0a1220}
   #readout{flex:0 0 auto;background:var(--panel);padding:10px 14px;font-size:13px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;min-height:46px}
@@ -89,6 +97,9 @@
   <header>
     <h1>富山湾 航空写真×水深マップ</h1>
     <p>岸近くの根・藻場・かけ上がりを、目で探す。線が詰まった帯＝急深。タップで水深が出ます。右下の📍で自分の「根メモ」も保存できます。</p>
+    <nav class="sister" aria-label="姉妹ツールとブログ">
+      <a href="../kayak-go-check/">出艇判断</a><a href="../kayak-fish-forecast/">釣果予報</a><a href="../kayak-fishing-log/">釣行ログ</a><a href="https://kayak-papa.hatenablog.com/">ブログ</a>
+    </nav>
   </header>
   <div id="map"><div class="loading" id="loading">水深データを読み込み中…</div></div>
   <div id="readout">
@@ -97,11 +108,12 @@
       <span class="k">緯度</span><span class="v" id="lat">–</span>
       &nbsp;&nbsp;<span class="k">経度</span><span class="v" id="lng">–</span>
     </span>
-    <span class="depth" style="display:none"><span class="k">推定水深</span><span class="v" id="depth">–</span></span>
+    <span class="depth" style="display:none"><span class="k">推定水深</span><span class="v" id="depth">–</span><span class="note">（目安・魚探で確認を）</span></span>
   </div>
 </div>
 
 <!-- 根メモ（自分のポイント） -->
+<button class="locbtn" id="locbtn" type="button" aria-label="現在地に移動して水深を見る">◎ 現在地</button>
 <button class="fab" id="fab" title="根メモ" aria-label="根メモを開く">📍</button>
 <div class="sheet" id="sheet">
   <div class="sheet-inner">
@@ -132,7 +144,7 @@
 <script src="vendor/leaflet/leaflet.js"></script>
 <script>
   const map = L.map('map', { zoomControl:true, attributionControl:true })
-    .setView([36.85, 137.22], 11);
+    .setView([36.79, 137.22], 12);   // 最初は岸寄りに（カヤックで行く0〜30mが見えるように）
 
   // 国土地理院・シームレス航空写真（無料・公式）。岸近くの澄んだ水は根や藻場が写る＝実質の高解像度。
   L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/seamlessphoto/{z}/{x}/{y}.jpg', {
@@ -141,11 +153,11 @@
   }).addTo(map);
 
   const LEVELS = [
-    { d:5,   color:'#c6fff0', weight:2.2, opacity:.9,  kayak:true },
-    { d:10,  color:'#9bf0dd', weight:2.4, opacity:.95, kayak:true },
-    { d:20,  color:'#63d6d0', weight:2.6, opacity:.98, kayak:true },
-    { d:30,  color:'#49b7d0', weight:2.6, opacity:.98, kayak:true },
-    { d:50,  color:'#4aa0d8', weight:2.2, opacity:.92, kayak:true },
+    { d:5,   color:'#fff3a3', weight:2.4, opacity:.95, kayak:true },
+    { d:10,  color:'#ffc04d', weight:2.6, opacity:.95, kayak:true },
+    { d:20,  color:'#6fe3b5', weight:2.6, opacity:.98, kayak:true },
+    { d:30,  color:'#3cc0f0', weight:2.6, opacity:.98, kayak:true },
+    { d:50,  color:'#6f8cff', weight:2.4, opacity:.95, kayak:true },
     { d:100, color:'#dbe6ff', weight:1.2, opacity:.5 },
     { d:200, color:'#cdd9f5', weight:1.1, opacity:.42 },
     { d:300, color:'#c2cff0', weight:1.0, opacity:.36 },
@@ -259,7 +271,9 @@
   const posEl=document.querySelector('#readout .pos');
   const depthEl=document.querySelector('#readout .depth');
   let marker=null;
-  map.on('click', (e)=>{
+  map.on('click', (e)=>showPoint(e.latlng));
+  function showPoint(latlng){
+    const e={latlng};
     const {lat,lng}=e.latlng;
     if(marker) marker.setLatLng(e.latlng);
     else marker=L.circleMarker(e.latlng,{radius:7,color:'#ff5aa0',weight:3,fillColor:'#ff5aa0',fillOpacity:.5}).addTo(map);
@@ -271,7 +285,23 @@
     document.getElementById('depth').textContent = (d==null)?'陸地/データ外':`約 ${Math.round(d)} m`;
     lastTap={lat,lng,depth:d};
     const st=document.getElementById('ne-savetap'); if(st) st.disabled=false;
-  });
+  }
+
+  // 現在地ボタン：位置はこの端末の中だけで使い、どこにも送らない
+  const locBtn=document.getElementById('locbtn');
+  locBtn.onclick=()=>{
+    if(!navigator.geolocation){ alert('この端末では現在地が使えません'); return; }
+    locBtn.disabled=true; locBtn.textContent='取得中…';
+    navigator.geolocation.getCurrentPosition((pos)=>{
+      const ll=L.latLng(pos.coords.latitude,pos.coords.longitude);
+      map.setView(ll,Math.max(map.getZoom(),14));
+      showPoint(ll);
+      locBtn.disabled=false; locBtn.textContent='◎ 現在地';
+    },(err)=>{
+      locBtn.disabled=false; locBtn.textContent='◎ 現在地';
+      alert(err.code===1?'位置情報の利用が許可されていません（スマホの設定で許可できます）':'現在地を取得できませんでした。電波のよい場所でもう一度どうぞ');
+    },{enableHighAccuracy:true,timeout:15000,maximumAge:30000});
+  };
 
   fetch('depth-toyama.json').then(r=>r.json()).then(data=>{
     G=data;
@@ -282,11 +312,16 @@
         .filter(l => l.length>1);
       if(!lines.length) continue;
       L.polyline(lines,{ color:lv.color, weight:lv.weight, opacity:lv.opacity, interactive:false, lineJoin:'round', lineCap:'round' }).addTo(map);
-      // カヤック帯の線に数字ラベルを1本だけ（一番長い線の中点）
+      // カヤック帯の線に数字ラベル（長い線の上に、ほぼ等間隔に数か所。どこを見ても読めるように）
       if(lv.kayak){
         lines.sort((a,b)=>polylineLenDeg(b)-polylineLenDeg(a));
-        const longest=lines[0]; const mid=longest[Math.floor(longest.length/2)];
-        L.marker(mid,{interactive:false, icon:L.divIcon({className:'depth-label', html:lv.d+'m', iconSize:null})}).addTo(labelLayer);
+        for(const line of lines.slice(0,2)){
+          const n=Math.max(1, Math.min(6, Math.round(polylineLenDeg(line)/0.06)));
+          for(let k=1;k<=n;k++){
+            const pt=line[Math.floor(line.length*k/(n+1))];
+            L.marker(pt,{interactive:false, icon:L.divIcon({className:'depth-label', html:`<span style="color:${lv.color}">${lv.d}m</span>`, iconSize:null})}).addTo(labelLayer);
+          }
+        }
       }
     }
     document.getElementById('loading').remove();
