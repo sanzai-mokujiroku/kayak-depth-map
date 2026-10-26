@@ -26,24 +26,28 @@
   *{box-sizing:border-box}
   html,body{margin:0;height:100%;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP",sans-serif;background:var(--bg);color:var(--fg)}
   #app{display:flex;flex-direction:column;height:100%}
-  header{position:relative;overflow:hidden;padding:10px 14px;background:#0b264b;flex:0 0 auto}
-  /* アプリアイコンと同じ紺地に水色の等深線（右側の飾り） */
-  header .hero-art{position:absolute;right:-56px;top:-22px;width:150px;height:auto;opacity:.5;pointer-events:none}
-  header h1,header p,header .sister{position:relative}
-  header p{max-width:72%}
-  header h1{margin:0;font-family:"Shippori Mincho B1","Hiragino Mincho ProN","Yu Mincho",serif;font-size:18px;font-weight:800;letter-spacing:.05em}
-  .sister{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 1px}
-  .sister a{display:inline-flex;align-items:center;gap:5px;color:var(--fg);background:#1d2f4d;border:1px solid #2a3b5c;border-radius:999px;padding:3px 10px 3px 4px;font-size:11.5px;text-decoration:none;white-space:nowrap}
-  .sister a img{width:18px;height:18px;border-radius:5px}
-  .locbtn{position:fixed;right:14px;bottom:126px;z-index:1000;height:40px;padding:0 14px;border-radius:999px;background:#16243c;color:var(--fg);border:1px solid #2a3b5c;font-size:13px;font-weight:700;box-shadow:0 3px 12px rgba(0,0,0,.5);cursor:pointer}
+  header{display:flex;align-items:center;gap:10px;padding:8px 12px;padding-top:max(8px,env(safe-area-inset-top));background:#0b264b;flex:0 0 auto}
+  header .mark{width:32px;height:32px;border-radius:8px;flex:none}
+  header .ttl{min-width:0;flex:1}
+  header h1{margin:0;font-family:"Shippori Mincho B1","Hiragino Mincho ProN","Yu Mincho",serif;font-size:15px;font-weight:800;letter-spacing:.02em;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  header .tools{flex:none;color:var(--fg);border:1px solid #2a4570;border-radius:999px;padding:8px 10px;font-size:11.5px;text-decoration:none;white-space:nowrap}
+  header .tools:hover{background:#163563}
+  .locbtn{position:absolute;right:12px;bottom:84px;z-index:1000;height:42px;padding:0 14px;border-radius:999px;background:#16243c;color:var(--fg);border:1px solid #2a3b5c;font-size:13px;font-weight:700;box-shadow:0 3px 12px rgba(0,0,0,.5);cursor:pointer}
   .locbtn:disabled{opacity:.6}
   #readout .depth .note{color:var(--sub);font-size:11px;margin-left:4px}
-  header p{margin:2px 0 0;font-size:11px;color:var(--sub)}
+  header p{margin:1px 0 0;font-size:11px;color:var(--sub);line-height:1.4}
+  .mapwrap{position:relative;flex:1 1 auto;display:flex;min-height:0}
   #map{flex:1 1 auto;width:100%;background:#0a1220}
   #readout{flex:0 0 auto;background:var(--panel);padding:10px 14px;font-size:13px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;min-height:46px}
   #readout .k{color:var(--sub);font-size:11px;margin-right:4px}
   #readout .v{font-variant-numeric:tabular-nums;font-weight:600}
-  #readout .depth .v{color:var(--accent);font-size:17px}
+  #readout .depth{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  #readout .depth .v{color:#fff;font-size:24px;font-weight:800;letter-spacing:.01em}
+  #readout .depth .sw{width:14px;height:14px;border-radius:4px;background:#556;flex:none;box-shadow:0 0 0 1px rgba(255,255,255,.25)}
+  #readout .depth .band{font-size:11.5px;color:#0f1a2b;background:var(--bandc,#9db4d6);border-radius:999px;padding:2px 8px;font-weight:700}
+  #readout .depth .note{margin-left:2px}
+  #readout .pos{font-size:12px}
+  #readout{gap:6px 16px !important;padding:10px 14px calc(10px + env(safe-area-inset-bottom)) !important}
   #readout .hint{color:var(--sub);font-size:12px}
   .leaflet-container{background:#0a1220}
   /* 等深線ラベル */
@@ -59,7 +63,7 @@
   .legend .note{color:var(--sub);margin-top:6px;font-size:10px;max-width:180px}
   .loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#9db4d6;font-size:13px;z-index:500;pointer-events:none}
   /* 根メモ（自分のポイント） */
-  .fab{position:fixed;right:14px;bottom:64px;z-index:1000;width:52px;height:52px;border-radius:50%;background:var(--accent);color:#fff;border:none;font-size:22px;box-shadow:0 3px 12px rgba(0,0,0,.5);cursor:pointer;display:flex;align-items:center;justify-content:center}
+  .fab{position:absolute;right:12px;bottom:28px;z-index:1000;height:46px;padding:0 16px 0 13px;gap:5px;border-radius:999px;background:var(--accent);color:#fff;border:none;font-size:14px;font-weight:800;box-shadow:0 3px 12px rgba(0,0,0,.5);cursor:pointer;display:flex;align-items:center;justify-content:center}
   .sheet,.modal{position:fixed;inset:0;z-index:1100;background:rgba(0,0,0,.5);display:none;align-items:flex-end;justify-content:center}
   .modal{align-items:center}
   .sheet.open,.modal.open{display:flex}
@@ -101,37 +105,39 @@
 <body>
 <div id="app">
   <header>
-    <img class="hero-art" src="hero-depth.webp" alt="" width="320" height="320">
-    <h1>富山湾 航空写真×水深マップ</h1>
-    <p>岸近くの根・藻場・かけ上がりを、目で探す。線が詰まった帯＝急深。タップで水深が出ます。右下の📍で自分の「根メモ」も保存できます。</p>
-    <nav class="sister" aria-label="姉妹ツールとブログ">
-      <a href="../kayak-go-check/"><img src="../kayak-go-check/icon-180.png" alt="" width="18" height="18">出艇判断</a><a href="../kayak-fish-forecast/"><img src="../kayak-fish-forecast/icon-180.png" alt="" width="18" height="18">釣果予報</a><a href="../kayak-fishing-log/"><img src="../kayak-fishing-log/icon-180.png" alt="" width="18" height="18">釣行ログ</a><a href="https://kayak-papa.hatenablog.com/">ブログ</a>
-    </nav>
+    <img class="mark" src="icon-192.png" alt="" width="32" height="32">
+    <div class="ttl">
+      <h1>富山湾 航空写真×水深マップ</h1>
+      <p>タップで水深。線が詰まった帯＝急深</p>
+    </div>
+    <a class="tools" href="../">ツール一覧</a>
   </header>
-  <div id="map"><div class="loading" id="loading">水深データを読み込み中…</div></div>
+  <div class="mapwrap">
+    <div id="map"><div class="loading" id="loading">水深データを読み込み中…</div></div>
+    <button class="locbtn" id="locbtn" type="button" aria-label="現在地に移動して水深を見る">◎ 現在地</button>
+    <button class="fab" id="fab" title="根メモ" aria-label="根メモを開く"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z" fill="currentColor"/></svg><span>根メモ</span></button>
+  </div>
   <div id="readout">
-    <span class="hint" id="hint">地図をタップしてください</span>
+    <span class="hint" id="hint">地図をタップすると、その場所の水深が出ます</span>
+    <span class="depth" style="display:none"><span class="sw" id="depth-sw"></span><span class="k">推定水深</span><span class="v" id="depth">–</span><span class="band" id="depth-band"></span><span class="note">目安・魚探で確認を</span></span>
     <span class="pos" style="display:none">
       <span class="k">緯度</span><span class="v" id="lat">–</span>
       &nbsp;&nbsp;<span class="k">経度</span><span class="v" id="lng">–</span>
     </span>
-    <span class="depth" style="display:none"><span class="k">推定水深</span><span class="v" id="depth">–</span><span class="note">（目安・魚探で確認を）</span></span>
   </div>
 </div>
 
 <!-- 根メモ（自分のポイント） -->
-<button class="locbtn" id="locbtn" type="button" aria-label="現在地に移動して水深を見る">◎ 現在地</button>
-<button class="fab" id="fab" title="根メモ" aria-label="根メモを開く">📍</button>
 <div class="sheet" id="sheet">
   <div class="sheet-inner">
     <button class="close-x" id="sheet-close" aria-label="閉じる">×</button>
-    <h2>📍 根メモ（自分のポイント）</h2>
+    <h2>根メモ（自分のポイント）</h2>
     <p class="sub">魚探で見つけた根の座標を保存します。写真は残さず、座標とメモだけをこの端末に保存（この端末のブラウザ内）。機種変や別端末へは「書き出し／読み込み」で移せます。</p>
     <div class="ne-actions">
       <button id="ne-savetap" disabled>＋ 地図で選んだ点を保存</button>
       <button id="ne-manual">＋ 座標を手入力</button>
-      <button id="ne-export">⬇ 書き出し(JSON)</button>
-      <button id="ne-import">⬆ 読み込み(JSON)</button>
+      <button id="ne-export">書き出し（ファイル）</button>
+      <button id="ne-import">読み込み（ファイル）</button>
     </div>
     <div id="ne-list"></div>
     <input type="file" id="ne-file" accept="application/json,.json" style="display:none">
@@ -290,6 +296,16 @@
     depthEl.style.display='';
     const d=G?depthAt(lat,lng):null;
     document.getElementById('depth').textContent = (d==null)?'陸地/データ外':`約 ${Math.round(d)} m`;
+    // 等深線と同じ色の札：いまの点がどの線とどの線の間か
+    const sw=document.getElementById('depth-sw'), bandEl=document.getElementById('depth-band');
+    if(d==null){ sw.style.display='none'; bandEl.style.display='none'; }
+    else{
+      const deeper=LEVELS.find(l=>l.d>=d), shallower=[...LEVELS].reverse().find(l=>l.d<d);
+      const c=(deeper||LEVELS[LEVELS.length-1]).color;
+      sw.style.display=''; sw.style.background=c;
+      bandEl.style.display=''; bandEl.style.setProperty('--bandc',c);
+      bandEl.textContent = deeper ? `${shallower?shallower.d:0}〜${deeper.d}mの帯` : `${LEVELS[LEVELS.length-1].d}mより深い`;
+    }
     lastTap={lat,lng,depth:d};
     const st=document.getElementById('ne-savetap'); if(st) st.disabled=false;
   }
